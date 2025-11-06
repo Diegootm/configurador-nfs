@@ -1,51 +1,62 @@
+"""
+Módulo principal para la gestión de configuraciones NFS
+"""
+
 import os
-import re 
+import re
 import shutil
 from datetime import datetime
 import subprocess
 
 
-class GestorNfs():
-
-
+class GestorNFS:
+    """
+    Clase principal para gestionar la configuración de NFS
+    """
+    
     def __init__(self, ruta_exports="/etc/exports"):
         self.ruta_exports = ruta_exports
         self.ruta_respaldo = f"{ruta_exports}.respaldo"
+        
+        # Opciones válidas de NFS
         self.opciones_validas = {
             'rw', 'ro', 'sync', 'async', 'no_root_squash', 
             'root_squash', 'all_squash', 'no_subtree_check', 
             'subtree_check', 'insecure', 'secure', 'anonuid', 'anongid'
         }
-    
+        
     def leer_configuracion_actual(self):
-        # para ver las configuracion del archivo 
-
+        """
+        Lee la configuración actual del archivo /etc/exports
+        """
         configuraciones = []
-
-        try: 
+        
+        try:
             if not os.path.exists(self.ruta_exports):
                 return configuraciones
             
             with open(self.ruta_exports, 'r') as archivo:
-                 for numero_linea, linea in enumerate(archivo, 1):
+                for numero_linea, linea in enumerate(archivo, 1):
                     linea = linea.strip()
-
-                    if not linea or linea.strartswith('#')
-                    continue
-
+                    
+                    # Saltar líneas vacías y comentarios
+                    if not linea or linea.startswith('#'):
+                        continue
+                    
                     configuracion = self._analizar_linea_exports(linea, numero_linea)
-
-                    if configuracion: 
-                        configuraciones.apped(configuracion)
-                return configuraciones
-        
+                    if configuracion:
+                        configuraciones.append(configuracion)
+            
+            return configuraciones
+            
         except Exception as error:
-            print(f"error al leer la configuracion {errro}")
+            print(f"Error leyendo configuración: {error}")
             return []
-
+    
     def _analizar_linea_exports(self, linea, numero_linea):
-        # esto para analizar una linea de archivo de exports y extrae la informacion
-
+        """
+        Analiza una línea del archivo exports y extrae la información
+        """
         try:
             patron = r'^(\S+)\s+(\S+)\(([^)]+)\)$'
             coincidencia = re.match(patron, linea)
