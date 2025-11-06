@@ -21,7 +21,7 @@ class VentanaPrincipal:
 
         #pestanias
         self._crear_pestana_ver_configuraciones()
-        self._crear_pestana_agregar_configuraciones()
+        self._crear_pestana_agregar_configuracion()
         self._crear_pestana_gestion_configuraciones()
 
         # barra de estado
