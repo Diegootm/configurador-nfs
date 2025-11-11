@@ -16,6 +16,11 @@ Aplicación gráfica para gestionar configuraciones del servidor NFS.
 - Tkinter (viene incluido con Python)
 - Sistema Linux con NFS
 
+## Instalacion 
+```bash
+sudo zypper install python3-base python3-tk
+```
+
 ## Uso
 
 ```bash
