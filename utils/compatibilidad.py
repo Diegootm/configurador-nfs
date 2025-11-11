@@ -1,28 +1,29 @@
-# esto espara verificar la compatibilidad del SO
+import os
 
-import os 
-
-def verificar_compatilibidad():
-
-    try: 
-        if os.path.exists ("etc/exports"):
-            print("archivo /etc/exports encotrado")
+def verificar_compatibilidad():
+    """
+    Verifica si el sistema es compatible
+    """
+    try:
+        if os.path.exists("/etc/exports"):
+            print("Archivo /etc/exports encontrado")
             return True
         else:
-            print("el archivo no fue encotrado")
-            return True
-    
+            print("Advertencia: Archivo /etc/exports no encontrado")
+            return True 
+            
     except Exception as error:
-        print(f"error verificado compatibilidad: {error}")
-        return True
+        print(f"Error verificando compatibilidad: {error}")
+        return True  
+
 
 def verificar_permisos_administrador():
-    # esto es para verificar si tenemos permisos de administrador
-
+    """
+    Verifica si la aplicación tiene permisos de administrador
+    """
     try:
         return os.geteuid() == 0
     except AttributeError:
-
         return True
 
         
