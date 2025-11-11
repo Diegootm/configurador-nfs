@@ -11,4 +11,8 @@ chmod +x install.sh
 sed -i 's/\r$//' install.sh
 sudo ./install.sh
 
+# Ejecutar configurador-nfs
+configurador-nfs
+
+
 
