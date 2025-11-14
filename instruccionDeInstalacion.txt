@@ -1,0 +1,52 @@
+Configurador NFS para OpenSUSE 15.6
+
+Esta es una aplicación de formato gráfico que permite gestionar las configuraciones del servidor NFS.
+
+Características
+- Ver configuraciones actuales de NFS
+- Agregar nuevas configuraciones
+- Eliminar configuraciones existentes
+- Aplicar cambios al servicio NFS
+- Interfaz en español
+
+Requisitos del Sistema
+
+Versión de software necesario:
+- OpenSUSE 15.6 (el más recomendado) o superiores
+- Python 3.6 o superior
+- Tkinter (viene incluido con Python)
+- Sistema Linux con NFS
+
+Entorno de desarrollo
+
+Instalación del entorno de desarrollo:
+
+1. Instalar Python y Tkinter
+sudo zypper install -y python3 python3-tk
+
+2. Instalar editor de código (opcional)
+sudo zypper install -y vscode    # Visual Studio Code
+O
+sudo zypper install -y geany     # Geany (más liviano)
+
+3. Clonar el repositorio
+git clone https://github.com/Diegootm/configurador-nfs.git
+cd configurador-nfs
+
+Guía de Instalación - Configurador NFS
+
+Instalación Automática:
+
+1. Descargar el proyecto
+git clone https://github.com/Diegootm/configurador-nfs.git
+cd configurador-nfs
+
+2. Ejecutar script de instalación
+chmod +x install.sh
+sed -i 's/\r$//' install.sh
+sudo ./install.sh
+
+3. Ejecutar configurador-nfs
+configurador-nfs
+
+Finalmente va a estar listo para el uso en tu equipo!
