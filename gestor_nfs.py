@@ -1,190 +1,161 @@
-"""
-Módulo principal para la gestión de configuraciones NFS
-"""
+# gestor_nfs.py
+# Compatible con Python 3.6.15
 
 import os
-import re
 import shutil
 from datetime import datetime
 import subprocess
 
+class GestorNFS(object):
+    """
+    Clase para gestionar /etc/exports de forma simple y segura.
+    """
 
-class GestorNFS:
-    """
-    Clase principal para gestionar la configuración de NFS
-    """
-    
     def __init__(self, ruta_exports="/etc/exports"):
         self.ruta_exports = ruta_exports
-        self.ruta_respaldo = f"{ruta_exports}.respaldo"
-        
-        # Opciones válidas de NFS
+        self.ruta_respaldo = "{0}.respaldo".format(ruta_exports)
+        # opciones válidas (las que aceptan valor se deben pasar como 'clave=valor')
         self.opciones_validas = {
-            'rw', 'ro', 'sync', 'async', 'no_root_squash', 
-            'root_squash', 'all_squash', 'no_subtree_check', 
-            'subtree_check', 'insecure', 'secure', 'anonuid', 'anongid'
+            'rw', 'ro', 'sync', 'async', 'no_root_squash',
+            'root_squash', 'all_squash', 'no_subtree_check',
+            'subtree_check', 'insecure', 'secure', 'anonuid',
+            'anongid'
         }
-        
+
     def leer_configuracion_actual(self):
         """
-        Lee la configuración actual del archivo /etc/exports
+        Lee /etc/exports y devuelve lista de dicts:
+        { 'carpeta':..., 'hosts':..., 'opciones': [...], 'linea_original':..., 'numero_linea': n }
         """
         configuraciones = []
-        
         try:
             if not os.path.exists(self.ruta_exports):
                 return configuraciones
-            
-            with open(self.ruta_exports, 'r') as archivo:
-                for numero_linea, linea in enumerate(archivo, 1):
-                    linea = linea.strip()
-                    
-                    # Saltar líneas vacías y comentarios
-                    if not linea or linea.startswith('#'):
+
+            with open(self.ruta_exports, 'r') as f:
+                for num, linea in enumerate(f, 1):
+                    linea_raw = linea.rstrip("\n")
+                    linea_strip = linea_raw.strip()
+                    if not linea_strip or linea_strip.startswith('#'):
                         continue
-                    
-                    configuracion = self._analizar_linea_exports(linea, numero_linea)
-                    if configuracion:
-                        configuraciones.append(configuracion)
-            
+                    # Buscar paréntesis que contienen opciones
+                    try:
+                        idx_open = linea_raw.index('(')
+                        idx_close = linea_raw.rindex(')')
+                    except ValueError:
+                        # línea no en formato esperado, omitir
+                        continue
+
+                    antes = linea_raw[:idx_open].strip()
+                    texto_opciones = linea_raw[idx_open+1:idx_close].strip()
+                    partes_antes = antes.split()
+                    if not partes_antes:
+                        continue
+                    carpeta = partes_antes[0]
+                    hosts = " ".join(partes_antes[1:]) if len(partes_antes) > 1 else "*"
+                    opciones = [o.strip() for o in texto_opciones.split(',') if o.strip()]
+                    configuraciones.append({
+                        'carpeta': carpeta,
+                        'hosts': hosts,
+                        'opciones': opciones,
+                        'linea_original': linea_raw,
+                        'numero_linea': num
+                    })
             return configuraciones
-            
-        except Exception as error:
-            print(f"Error leyendo configuración: {error}")
+        except Exception as e:
+            print("Error leyendo configuración: {0}".format(e))
             return []
-    
-    def _analizar_linea_exports(self, linea, numero_linea):
-        """
-        Analiza una línea del archivo exports y extrae la información
-        """
-        try:
-            patron = r'^(\S+)\s+(\S+)\(([^)]+)\)$'
-            coincidencia = re.match(patron, linea)
-            
-            if not coincidencia:
-                return None
-            
-            carpeta, host, texto_opciones = coincidencia.groups()
-            opciones = [opcion.strip() for opcion in texto_opciones.split(',')]
-            
-            return {
-                'carpeta': carpeta,
-                'host': host,
-                'opciones': opciones,
-                'linea_original': linea,
-                'numero_linea': numero_linea
-            }
-            
-        except Exception as error:
-            print(f"Error analizando línea {numero_linea}: {error}")
-            return None
-    
-    def agregar_configuracion(self, carpeta, host, opciones):
-        """
-        Agrega una nueva configuración al archivo exports
-        """
-        try:
-            if not self._validar_parametros(carpeta, host, opciones):
-                return False
-            
-            self._crear_respaldo()
-            
-            linea_nueva = self._formatear_linea_exports(carpeta, host, opciones)
-            
-            with open(self.ruta_exports, 'a') as archivo:
-                archivo.write(f"\n{linea_nueva}")
-            
-            print(f"Configuración agregada: {linea_nueva}")
-            return True
-            
-        except Exception as error:
-            print(f"Error agregando configuración: {error}")
+
+    def _validar_parametros(self, carpeta, hosts, opciones):
+        if not carpeta or not hosts:
+            print("Carpeta y hosts son requeridos")
             return False
-    
-    def eliminar_configuracion(self, indice):
-        """
-        Elimina una configuración del archivo exports
-        """
-        try:
-            configuraciones = self.leer_configuracion_actual()
-            
-            if indice < 0 or indice >= len(configuraciones):
-                return False
-            
-            self._crear_respaldo()
-            
-            with open(self.ruta_exports, 'w') as archivo:
-                for i, configuracion in enumerate(configuraciones):
-                    if i != indice:
-                        archivo.write(f"{configuracion['linea_original']}\n")
-            
-            print(f"Configuración {indice} eliminada exitosamente")
-            return True
-            
-        except Exception as error:
-            print(f"Error eliminando configuración: {error}")
-            return False
-    
-    def _validar_parametros(self, carpeta, host, opciones):
-        """
-        Valida los parámetros de configuración
-        """
-        if not carpeta or not host:
-            print("Error: Carpeta y host son requeridos")
-            return False
-        
         if not isinstance(opciones, list):
-            print("Error: Las opciones deben ser una lista")
+            print("Opciones deben ser lista")
             return False
-        
-        for opcion in opciones:
-            if opcion not in self.opciones_validas:
-                print(f"Error: Opción inválida: {opcion}")
+        # validar opciones
+        for opt in opciones:
+            if '=' in opt:
+                clave = opt.split('=', 1)[0]
+            else:
+                clave = opt
+            if clave not in self.opciones_validas:
+                print("Opción inválida: {0}".format(opt))
                 return False
-        
         return True
-    
-    def _formatear_linea_exports(self, carpeta, host, opciones):
-        """
-        Formatea una línea para el archivo exports
-        """
-        texto_opciones = ','.join(opciones)
-        return f"{carpeta} {host}({texto_opciones})"
-    
+
+    def _formatear_linea_exports(self, carpeta, hosts, opciones):
+        texto_opciones = ",".join(opciones)
+        return "{0} {1}({2})".format(carpeta, hosts, texto_opciones)
+
     def _crear_respaldo(self):
-        """
-        Crea un respaldo del archivo exports actual
-        """
         try:
             if os.path.exists(self.ruta_exports):
                 marca_tiempo = datetime.now().strftime("%Y%m%d_%H%M%S")
-                ruta_respaldo_timestamp = f"{self.ruta_respaldo}.{marca_tiempo}"
+                ruta_respaldo_timestamp = "{0}.{1}".format(self.ruta_respaldo, marca_tiempo)
                 shutil.copy2(self.ruta_exports, ruta_respaldo_timestamp)
-                print(f"Respaldo creado: {ruta_respaldo_timestamp}")
-        except Exception as error:
-            print(f"Error creando respaldo: {error}")
-    
-    def obtener_opciones_validas(self):
+                print("Respaldo creado: {0}".format(ruta_respaldo_timestamp))
+        except Exception as e:
+            print("Error creando respaldo: {0}".format(e))
+
+    def agregar_configuracion(self, carpeta, hosts, opciones):
         """
-        Retorna la lista de opciones válidas para NFS
-        """
-        return self.opciones_validas.copy()
-    
-    def aplicar_cambios_nfs(self):
-        """
-        Aplica los cambios reiniciando el servicio NFS
+        Agrega una nueva línea a /etc/exports. Devuelve True/False.
         """
         try:
-            resultado = subprocess.run(["exportfs", "-ra"], 
-                                     capture_output=True, text=True)
-            
+            if not self._validar_parametros(carpeta, hosts, opciones):
+                return False
+            self._crear_respaldo()
+            linea = self._formatear_linea_exports(carpeta, hosts, opciones)
+            # Asegurarse de terminar con newline
+            with open(self.ruta_exports, 'a') as f:
+                f.write("\n" + linea + "\n")
+            print("Configuración agregada: {0}".format(linea))
+            return True
+        except Exception as e:
+            print("Error agregando configuración: {0}".format(e))
+            return False
+
+    def eliminar_configuracion(self, indice):
+        """
+        Elimina la configuración por índice en la lista devuelta por leer_configuracion_actual.
+        """
+        try:
+            configs = self.leer_configuracion_actual()
+            if indice < 0 or indice >= len(configs):
+                return False
+            self._crear_respaldo()
+            with open(self.ruta_exports, 'w') as f:
+                for i, c in enumerate(configs):
+                    if i == indice:
+                        continue
+                    f.write(c['linea_original'].rstrip("\n") + "\n")
+            print("Configuración {0} eliminada".format(indice))
+            return True
+        except Exception as e:
+            print("Error eliminando configuración: {0}".format(e))
+            return False
+
+    def obtener_opciones_validas(self):
+        return sorted(list(self.opciones_validas))
+
+    def aplicar_cambios_nfs(self):
+        """
+        Ejecuta 'exportfs -ra' para aplicar cambios. Retorna True si succeed.
+        """
+        try:
+            resultado = subprocess.run(
+                ["exportfs", "-ra"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True
+            )
             if resultado.returncode == 0:
-                print("Configuraciones NFS aplicadas exitosamente")
+                print("exportfs -ra: OK")
                 return True
             else:
-                print(f"Error aplicando configuraciones NFS: {resultado.stderr}")
+                print("exportfs -ra error: {0}".format(resultado.stderr))
                 return False
-                
-        except Exception as error:
-            print(f"Error aplicando cambios NFS: {error}")
+        except Exception as e:
+            print("Error aplicando cambios NFS: {0}".format(e))
             return False
