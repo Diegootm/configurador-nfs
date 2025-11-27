@@ -1,293 +1,236 @@
+# ui/ventana_principal.py
+# Interfaz gráfica compatible con Python 3.6
+
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
+from tkinter import simpledialog
 
-class VentanaPrincipal:
-    # este va ha ser la interfaz grafica
-
+class VentanaPrincipal(object):
     def __init__(self, raiz, gestor_nfs):
         self.raiz = raiz
         self.gestor_nfs = gestor_nfs
         self.configuraciones = []
+        # opciones simples (checkbox booleans)
         self.variables_opciones = {}
-        
-        self._inicicializar_interfaz()
+        # valores para opciones con argumento (anonuid, anongid)
+        self.valores_opciones = {}
+
+        self._inicializar_interfaz()
         self._cargar_configuraciones()
 
-    def _inicicializar_interfaz(self):
-        #va a iniciar los componentes de la interfaz
-
+    def _inicializar_interfaz(self):
+        self.raiz.title("Configurador NFS (compatible Python 3.6)")
         self.cuaderno = ttk.Notebook(self.raiz)
-        self.cuaderno.pack(fill='both', expan=True, padx=10, pady=10)
+        self.cuaderno.pack(fill='both', expand=True, padx=10, pady=10)
 
-        #pestanias
         self._crear_pestana_ver_configuraciones()
         self._crear_pestana_agregar_configuracion()
         self._crear_pestana_gestion_configuraciones()
 
-        # barra de estado
-
         self.barra_estado = ttk.Label(self.raiz, text="Listo", relief=tk.SUNKEN, anchor=tk.W)
         self.barra_estado.pack(side=tk.BOTTOM, fill=tk.X)
-    
+
     def _crear_pestana_ver_configuraciones(self):
-        """Crea la pestaña para ver configuraciones actuales"""
-        marco_ver = ttk.Frame(self.cuaderno)
-        self.cuaderno.add(marco_ver, text="Ver Configuraciones")
-        
-        # Título
-        etiqueta_titulo = ttk.Label(marco_ver, text="Configuraciones NFS Actuales:", 
-                                   font=('Arial', 12, 'bold'))
-        etiqueta_titulo.pack(pady=5)
-        
-        # Área de texto para mostrar configuraciones
-        self.texto_configuraciones = scrolledtext.ScrolledText(
-            marco_ver, 
-            width=80, 
-            height=20,
-            wrap=tk.WORD
-        )
+        marco = ttk.Frame(self.cuaderno)
+        self.cuaderno.add(marco, text="Ver Configuraciones")
+
+        etiqueta = ttk.Label(marco, text="Configuraciones NFS actuales:", font=("Arial", 12, "bold"))
+        etiqueta.pack(pady=5)
+
+        self.texto_configuraciones = scrolledtext.ScrolledText(marco, width=80, height=20, wrap=tk.WORD)
         self.texto_configuraciones.pack(fill='both', expand=True, padx=10, pady=5)
-        
-        # Botones
-        marco_botones = ttk.Frame(marco_ver)
-        marco_botones.pack(pady=10)
-        
-        boton_actualizar = ttk.Button(
-            marco_botones, 
-            text="Actualizar Vista", 
-            command=self._cargar_configuraciones
-        )
-        boton_actualizar.pack(side=tk.LEFT, padx=5)
-        
-        boton_aplicar_cambios = ttk.Button(
-            marco_botones,
-            text="Aplicar Cambios NFS",
-            command=self._aplicar_cambios_nfs
-        )
-        boton_aplicar_cambios.pack(side=tk.LEFT, padx=5)
-    
+
+        marco_bot = ttk.Frame(marco)
+        marco_bot.pack(pady=10)
+        btn_actualizar = ttk.Button(marco_bot, text="Actualizar Vista", command=self._cargar_configuraciones)
+        btn_actualizar.pack(side=tk.LEFT, padx=5)
+        btn_aplicar = ttk.Button(marco_bot, text="Aplicar Cambios NFS", command=self._aplicar_cambios_nfs)
+        btn_aplicar.pack(side=tk.LEFT, padx=5)
+
     def _crear_pestana_agregar_configuracion(self):
-        """Crea la pestaña para agregar nuevas configuraciones"""
-        marco_agregar = ttk.Frame(self.cuaderno)
-        self.cuaderno.add(marco_agregar, text="Agregar Configuración")
-        
-        # Campos de entrada
-        self._crear_campos_entrada(marco_agregar)
-        
-        # Opciones NFS
-        self._crear_opciones_nfs(marco_agregar)
-        
-        # Botones
-        marco_botones = ttk.Frame(marco_agregar)
-        marco_botones.pack(pady=20)
-        
-        boton_agregar = ttk.Button(
-            marco_botones,
-            text="Agregar Configuración",
-            command=self._agregar_configuracion
-        )
-        boton_agregar.pack(side=tk.LEFT, padx=5)
-        
-        boton_limpiar = ttk.Button(
-            marco_botones,
-            text="Limpiar Campos",
-            command=self._limpiar_campos
-        )
-        boton_limpiar.pack(side=tk.LEFT, padx=5)
-    
-    def _crear_pestana_gestion_configuraciones(self):
-        """Crea la pestaña para modificar/eliminar configuraciones"""
-        marco_gestion = ttk.Frame(self.cuaderno)
-        self.cuaderno.add(marco_gestion, text="Gestionar Configuraciones")
-        
-        # Título
-        etiqueta_titulo = ttk.Label(marco_gestion, text="Configuraciones Existentes:", 
-                                   font=('Arial', 12, 'bold'))
-        etiqueta_titulo.pack(pady=5)
-        
-        # Lista de configuraciones
-        marco_lista = ttk.Frame(marco_gestion)
-        marco_lista.pack(fill='both', expand=True, padx=10, pady=5)
-        
-        self.lista_configuraciones = tk.Listbox(marco_lista, height=15)
-        barra_desplazamiento = ttk.Scrollbar(marco_lista, orient="vertical", 
-                                           command=self.lista_configuraciones.yview)
-        self.lista_configuraciones.configure(yscrollcommand=barra_desplazamiento.set)
-        
-        self.lista_configuraciones.pack(side=tk.LEFT, fill='both', expand=True)
-        barra_desplazamiento.pack(side=tk.RIGHT, fill='y')
-        
-        # Botones de gestión
-        marco_botones_gestion = ttk.Frame(marco_gestion)
-        marco_botones_gestion.pack(pady=10)
-        
-        boton_eliminar = ttk.Button(
-            marco_botones_gestion,
-            text="Eliminar Seleccionada",
-            command=self._eliminar_configuracion
-        )
-        boton_eliminar.pack(side=tk.LEFT, padx=5)
-        
-        boton_actualizar_lista = ttk.Button(
-            marco_botones_gestion,
-            text="Actualizar Lista",
-            command=self._actualizar_lista_configuraciones
-        )
-        boton_actualizar_lista.pack(side=tk.LEFT, padx=5)
-    
-    def _crear_campos_entrada(self, padre):
-        """Crea los campos de entrada para carpeta y host"""
-        marco_campos = ttk.Frame(padre)
+        marco = ttk.Frame(self.cuaderno)
+        self.cuaderno.add(marco, text="Agregar Configuración")
+
+        # campos carpeta y hosts
+        marco_campos = ttk.Frame(marco)
         marco_campos.pack(fill='x', padx=10, pady=10)
-        
-        # Campo Carpeta
-        etiqueta_carpeta = ttk.Label(marco_campos, text="Carpeta a exportar:")
-        etiqueta_carpeta.grid(row=0, column=0, sticky='w', pady=5)
-        
-        self.entrada_carpeta = ttk.Entry(marco_campos, width=50)
-        self.entrada_carpeta.grid(row=0, column=1, padx=5, pady=5, sticky='ew')
-        
-        # Campo Host
-        etiqueta_host = ttk.Label(marco_campos, text="Host o Red:")
-        etiqueta_host.grid(row=1, column=0, sticky='w', pady=5)
-        
-        self.entrada_host = ttk.Entry(marco_campos, width=50)
-        self.entrada_host.grid(row=1, column=1, padx=5, pady=5, sticky='ew')
-        
-        # Ejemplos
-        etiqueta_ejemplos = ttk.Label(marco_campos, 
-                                     text="Ejemplos: /home/miusuario 192.168.1.0/24", 
-                                     font=('Arial', 9))
-        etiqueta_ejemplos.grid(row=2, column=0, columnspan=2, sticky='w', pady=5)
-        
+        ttk.Label(marco_campos, text="Carpeta a exportar:").grid(row=0, column=0, sticky='w')
+        self.entrada_carpeta = ttk.Entry(marco_campos, width=60)
+        self.entrada_carpeta.grid(row=0, column=1, sticky='ew', padx=5, pady=2)
+        ttk.Label(marco_campos, text="Hosts o red (ej: 192.168.1.0/24 o 10.0.0.0/24):").grid(row=1, column=0, sticky='w')
+        self.entrada_hosts = ttk.Entry(marco_campos, width=60)
+        self.entrada_hosts.grid(row=1, column=1, sticky='ew', padx=5, pady=2)
         marco_campos.columnconfigure(1, weight=1)
-    
-    def _crear_opciones_nfs(self, padre):
-        """Crea los checkboxes para las opciones NFS"""
-        marco_opciones = ttk.LabelFrame(padre, text="Opciones NFS")
-        marco_opciones.pack(fill='x', padx=10, pady=10)
-        
-        opciones_validas = self.gestor_nfs.obtener_opciones_validas()
-        opciones_ordenadas = sorted(opciones_validas)
-        
-        # Crear checkboxes en 3 columnas
-        self.variables_opciones = {}
-        fila, columna = 0, 0
-        max_columnas = 3
-        
-        for opcion in opciones_ordenadas:
-            variable = tk.BooleanVar()
-            self.variables_opciones[opcion] = variable
-            
-            casilla_verificacion = ttk.Checkbutton(
-                marco_opciones,
-                text=opcion,
-                variable=variable
-            )
-            casilla_verificacion.grid(row=fila, column=columna, sticky='w', padx=5, pady=2)
-            
-            columna += 1
-            if columna >= max_columnas:
-                columna = 0
+
+        ttk.Label(marco_campos, text="Ejemplo: /home/miusuario 192.168.1.0/24").grid(row=2, column=0, columnspan=2, sticky='w', pady=5)
+
+        # opciones NFS
+        marco_opts = ttk.LabelFrame(marco, text="Opciones NFS")
+        marco_opts.pack(fill='x', padx=10, pady=10)
+
+        opciones = self.gestor_nfs.obtener_opciones_validas()
+        # ordenamos, y tratar anonuid/anongid aparte para pedir valor
+        opciones = sorted(opciones)
+
+        fila = 0
+        col = 0
+        max_cols = 3
+
+        for opt in opciones:
+            if opt in ('anonuid', 'anongid'):
+                # checkbutton + entry para valor
+                var = tk.BooleanVar()
+                self.variables_opciones[opt] = var
+                chk = ttk.Checkbutton(marco_opts, text=opt, variable=var, command=lambda o=opt: self._toggle_valor(o))
+                chk.grid(row=fila, column=col, sticky='w', padx=5, pady=2)
+                # entry (disabled por defecto)
+                entrada = ttk.Entry(marco_opts, width=8)
+                entrada.grid(row=fila, column=col+1, sticky='w', padx=2)
+                entrada.configure(state='disabled')
+                self.valores_opciones[opt] = entrada
+
+                col += 2
+            else:
+                var = tk.BooleanVar()
+                self.variables_opciones[opt] = var
+                chk = ttk.Checkbutton(marco_opts, text=opt, variable=var)
+                chk.grid(row=fila, column=col, sticky='w', padx=5, pady=2)
+                col += 1
+
+            if col >= max_cols:
                 fila += 1
-        
-        # Ajustar columnas
-        for i in range(max_columnas):
-            marco_opciones.columnconfigure(i, weight=1)
-    
-    def _cargar_configuraciones(self):
-        """Carga y muestra las configuraciones actuales"""
-        self.configuraciones = self.gestor_nfs.leer_configuracion_actual()
-        
-        # Actualizar área de texto
-        self.texto_configuraciones.delete(1.0, tk.END)
-        
-        if not self.configuraciones:
-            self.texto_configuraciones.insert(tk.END, "No hay configuraciones NFS definidas.")
-        else:
-            for i, configuracion in enumerate(self.configuraciones):
-                self.texto_configuraciones.insert(tk.END, f"{i+1}. {configuracion['linea_original']}\n")
-        
-        # Actualizar lista en pestaña de gestión
-        self._actualizar_lista_configuraciones()
-        
-        self._actualizar_barra_estado(f"Configuraciones cargadas: {len(self.configuraciones)}")
-    
-    def _actualizar_lista_configuraciones(self):
-        """Actualiza la lista de configuraciones en la pestaña de gestión"""
-        self.lista_configuraciones.delete(0, tk.END)
-        
-        for i, configuracion in enumerate(self.configuraciones):
-            texto_item = f"{i+1}. {configuracion['carpeta']} -> {configuracion['host']}"
-            self.lista_configuraciones.insert(tk.END, texto_item)
-    
-    def _agregar_configuracion(self):
-        """Maneja el evento de agregar nueva configuración"""
-        carpeta = self.entrada_carpeta.get().strip()
-        host = self.entrada_host.get().strip()
-        
-        if not carpeta or not host:
-            messagebox.showerror("Error", "Debe especificar carpeta y host")
+                col = 0
+
+        # botones
+        marco_bot = ttk.Frame(marco)
+        marco_bot.pack(pady=10)
+        btn_agregar = ttk.Button(marco_bot, text="Agregar Configuración", command=self._agregar_configuracion)
+        btn_agregar.pack(side=tk.LEFT, padx=5)
+        btn_limpiar = ttk.Button(marco_bot, text="Limpiar Campos", command=self._limpiar_campos)
+        btn_limpiar.pack(side=tk.LEFT, padx=5)
+
+    def _toggle_valor(self, opcion):
+        """
+        Habilita o deshabilita el entry asociado a anonuid/anongid
+        """
+        entry = self.valores_opciones.get(opcion)
+        var = self.variables_opciones.get(opcion)
+        if entry is None or var is None:
             return
-        
-        # Obtener opciones seleccionadas
-        opciones = [opcion for opcion, variable in self.variables_opciones.items() if variable.get()]
-        
+        if var.get():
+            entry.configure(state='normal')
+        else:
+            entry.delete(0, tk.END)
+            entry.configure(state='disabled')
+
+    def _crear_pestana_gestion_configuraciones(self):
+        marco = ttk.Frame(self.cuaderno)
+        self.cuaderno.add(marco, text="Gestionar Configuraciones")
+
+        ttk.Label(marco, text="Configuraciones existentes:", font=("Arial", 12, "bold")).pack(pady=5)
+        marco_lista = ttk.Frame(marco)
+        marco_lista.pack(fill='both', expand=True, padx=10, pady=5)
+        self.lista_configuraciones = tk.Listbox(marco_lista, height=15)
+        barra = ttk.Scrollbar(marco_lista, orient='vertical', command=self.lista_configuraciones.yview)
+        self.lista_configuraciones.configure(yscrollcommand=barra.set)
+        self.lista_configuraciones.pack(side=tk.LEFT, fill='both', expand=True)
+        barra.pack(side=tk.RIGHT, fill='y')
+
+        marco_bot = ttk.Frame(marco)
+        marco_bot.pack(pady=10)
+        ttk.Button(marco_bot, text="Eliminar Seleccionada", command=self._eliminar_configuracion).pack(side=tk.LEFT, padx=5)
+        ttk.Button(marco_bot, text="Actualizar Lista", command=self._actualizar_lista_configuraciones).pack(side=tk.LEFT, padx=5)
+
+    def _cargar_configuraciones(self):
+        self.configuraciones = self.gestor_nfs.leer_configuracion_actual()
+        self.texto_configuraciones.delete(1.0, tk.END)
+        if not self.configuraciones:
+            self.texto_configuraciones.insert(tk.END, "No hay configuraciones NFS definidas.\n")
+        else:
+            for i, c in enumerate(self.configuraciones):
+                linea = "{0}. {1}".format(i+1, c['linea_original'])
+                self.texto_configuraciones.insert(tk.END, linea + "\n")
+        self._actualizar_lista_configuraciones()
+        self._actualizar_barra_estado("Configuraciones cargadas: {0}".format(len(self.configuraciones)))
+
+    def _actualizar_lista_configuraciones(self):
+        self.lista_configuraciones.delete(0, tk.END)
+        for i, c in enumerate(self.configuraciones):
+            texto = "{0}. {1} -> {2}".format(i+1, c['carpeta'], c['hosts'])
+            self.lista_configuraciones.insert(tk.END, texto)
+
+    def _agregar_configuracion(self):
+        carpeta = self.entrada_carpeta.get().strip()
+        hosts = self.entrada_hosts.get().strip()
+        if not carpeta or not hosts:
+            messagebox.showerror("Error", "Debe indicar carpeta y hosts/red")
+            return
+
+        opciones = []
+        for opt, var in self.variables_opciones.items():
+            if isinstance(var, tk.BooleanVar) and var.get():
+                # si es anonuid/anongid, buscar valor en entry
+                if opt in self.valores_opciones:
+                    entry = self.valores_opciones[opt]
+                    valor = entry.get().strip()
+                    if not valor:
+                        # pedir valor con dialog
+                        valor = simpledialog.askstring("Valor requerido", "Escriba valor para {0}:".format(opt))
+                    if valor:
+                        opciones.append("{0}={1}".format(opt, valor))
+                    else:
+                        messagebox.showerror("Error", "La opción {0} requiere un valor numérico".format(opt))
+                        return
+                else:
+                    opciones.append(opt)
+
         if not opciones:
-            messagebox.showwarning("Advertencia", "No se seleccionaron opciones. Se usarán opciones por defecto.")
-            opciones = ['ro', 'sync']  # Opciones por defecto
-        
-        # Agregar configuración
-        if self.gestor_nfs.agregar_configuracion(carpeta, host, opciones):
-            messagebox.showinfo("Éxito", "Configuración agregada correctamente")
+            # aplicar por defecto
+            opciones = ['rw', 'sync']
+
+        ok = self.gestor_nfs.agregar_configuracion(carpeta, hosts, opciones)
+        if ok:
+            messagebox.showinfo("Éxito", "Configuración agregada")
             self._limpiar_campos()
             self._cargar_configuraciones()
         else:
-            messagebox.showerror("Error", "No se pudo agregar la configuración")
-    
+            messagebox.showerror("Error", "No se pudo agregar la configuración (ver consola)")
+
     def _eliminar_configuracion(self):
-        """Maneja el evento de eliminar configuración"""
-        seleccion = self.lista_configuraciones.curselection()
-        
-        if not seleccion:
-            messagebox.showwarning("Advertencia", "Seleccione una configuración para eliminar")
+        sel = self.lista_configuraciones.curselection()
+        if not sel:
+            messagebox.showwarning("Advertencia", "Seleccione una configuración")
             return
-        
-        indice = seleccion[0]
-        
-        confirmacion = messagebox.askyesno(
-            "Confirmar Eliminación",
-            f"¿Está seguro de eliminar la configuración seleccionada?\n\n{self.configuraciones[indice]['linea_original']}"
-        )
-        
-        if confirmacion:
-            if self.gestor_nfs.eliminar_configuracion(indice):
-                messagebox.showinfo("Éxito", "Configuración eliminada correctamente")
-                self._cargar_configuraciones()
-            else:
-                messagebox.showerror("Error", "No se pudo eliminar la configuración")
-    
+        idx = sel[0]
+        linea = self.configuraciones[idx]['linea_original']
+        confirma = messagebox.askyesno("Confirmar", "Eliminar esta configuración?\n\n{0}".format(linea))
+        if not confirma:
+            return
+        ok = self.gestor_nfs.eliminar_configuracion(idx)
+        if ok:
+            messagebox.showinfo("Éxito", "Configuración eliminada")
+            self._cargar_configuraciones()
+        else:
+            messagebox.showerror("Error", "No se pudo eliminar (ver consola)")
+
     def _aplicar_cambios_nfs(self):
-        """Aplica los cambios reiniciando el servicio NFS"""
-        confirmacion = messagebox.askyesno(
-            "Aplicar Cambios",
-            "¿Está seguro de aplicar los cambios al servicio NFS?\nEsto reiniciará el servicio."
-        )
-        
-        if confirmacion:
-            if self.gestor_nfs.aplicar_cambios_nfs():
-                messagebox.showinfo("Éxito", "Cambios aplicados correctamente al servicio NFS")
-            else:
-                messagebox.showerror("Error", "No se pudieron aplicar los cambios al servicio NFS")
-    
+        confirma = messagebox.askyesno("Aplicar cambios", "Esto ejecutará 'exportfs -ra'. Continuar?")
+        if not confirma:
+            return
+        ok = self.gestor_nfs.aplicar_cambios_nfs()
+        if ok:
+            messagebox.showinfo("Éxito", "Cambios aplicados correctamente")
+        else:
+            messagebox.showerror("Error", "No se pudieron aplicar los cambios (ver consola)")
+
     def _limpiar_campos(self):
-        """Limpia todos los campos de entrada"""
         self.entrada_carpeta.delete(0, tk.END)
-        self.entrada_host.delete(0, tk.END)
-        
-        for variable in self.variables_opciones.values():
-            variable.set(False)
-    
-    def _actualizar_barra_estado(self, mensaje):
-        """Actualiza el texto de la barra de estado"""
-        self.barra_estado.config(text=mensaje)
+        self.entrada_hosts.delete(0, tk.END)
+        for var in self.variables_opciones.values():
+            var.set(False)
+        for entry in self.valores_opciones.values():
+            entry.delete(0, tk.END)
+            entry.configure(state='disabled')
+
+    def _actualizar_barra_estado(self, texto):
+        self.barra_estado.config(text=texto)
