@@ -1,16 +1,18 @@
 # gestor_nfs.py
-# Compatible con Python 3.6.15 - Con fix de permisos
+# Compatible con Python 3.6.15 - Con soporte para archivos individuales
 
 import os
 import shutil
 from datetime import datetime
 import subprocess
 import stat
+import hashlib
 
 class GestorNFS(object):
     """
     Clase para gestionar /etc/exports de forma simple y segura.
     Incluye gestión automática de permisos del sistema de archivos.
+    Soporta exportación de archivos individuales con fsid automático.
     """
 
     def __init__(self, ruta_exports="/etc/exports"):
@@ -31,7 +33,8 @@ class GestorNFS(object):
             'insecure': 'Permite conexiones desde puertos > 1024',
             'secure': 'Solo permite conexiones desde puertos < 1024',
             'anonuid': 'UID del usuario anónimo (ejemplo: anonuid=1000)',
-            'anongid': 'GID del grupo anónimo (ejemplo: anongid=1000)'
+            'anongid': 'GID del grupo anónimo (ejemplo: anongid=1000)',
+            'fsid': 'ID único del filesystem (requerido para archivos)'
         }
         
         self.opciones_validas = set(self.opciones_info.keys())
@@ -43,6 +46,36 @@ class GestorNFS(object):
     def obtener_opciones_con_descripciones(self):
         """Retorna un diccionario con opciones y sus descripciones"""
         return self.opciones_info.copy()
+
+    def generar_fsid_desde_ruta(self, ruta):
+        """
+        Genera un fsid único basado en la ruta del archivo
+        Retorna un número entre 1 y 9999
+        """
+        # Usar hash de la ruta para generar un número consistente
+        hash_obj = hashlib.md5(ruta.encode())
+        hash_hex = hash_obj.hexdigest()
+        # Tomar los primeros 4 caracteres y convertir a número
+        numero = int(hash_hex[:4], 16) % 9999 + 1
+        return numero
+
+    def obtener_fsids_usados(self):
+        """
+        Retorna un conjunto con todos los fsid ya usados en /etc/exports
+        """
+        fsids_usados = set()
+        configuraciones = self.leer_configuracion_actual()
+        
+        for config in configuraciones:
+            for opcion in config['opciones']:
+                if opcion.startswith('fsid='):
+                    try:
+                        fsid = int(opcion.split('=')[1])
+                        fsids_usados.add(fsid)
+                    except ValueError:
+                        pass
+        
+        return fsids_usados
 
     def validar_ruta(self, ruta):
         """
@@ -97,10 +130,10 @@ class GestorNFS(object):
                     permisos_recomendados = stat.S_IRUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH  # 555
                     modo_recomendado = "r-xr-xr-x (555)"
             else:
-                # Para archivos con rw, necesitamos rw-r--r-- (644) o mejor
+                # Para archivos con rw, necesitamos rw-rw-rw- (666) para permitir escritura desde clientes
                 if necesita_escritura:
-                    permisos_recomendados = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH  # 644
-                    modo_recomendado = "rw-r--r-- (644)"
+                    permisos_recomendados = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH  # 666
+                    modo_recomendado = "rw-rw-rw- (666)"
                 else:
                     # Para solo lectura, r--r--r-- (444)
                     permisos_recomendados = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH  # 444
@@ -110,15 +143,15 @@ class GestorNFS(object):
             permisos_suficientes = (stat_info.st_mode & permisos_recomendados) == permisos_recomendados
             
             if not permisos_suficientes:
-                mensajes.append("⚠️  ADVERTENCIA: Los permisos actuales pueden no ser suficientes")
+                mensajes.append("ADVERTENCIA: Los permisos actuales pueden no ser suficientes")
                 mensajes.append("    Permisos recomendados: {0}".format(modo_recomendado))
                 mensajes.append("")
-                mensajes.append("¿Desea ajustar los permisos automáticamente?")
-                mensajes.append("(Esto cambiará los permisos del sistema de archivos)")
+                mensajes.append("Desea ajustar los permisos automaticamente?")
+                mensajes.append("(Esto cambiara los permisos del sistema de archivos)")
                 
                 return (False, "\n".join(mensajes))
             else:
-                mensajes.append("✓ Los permisos son adecuados para la configuración NFS")
+                mensajes.append("Los permisos son adecuados para la configuracion NFS")
                 return (True, "\n".join(mensajes))
                 
         except Exception as e:
@@ -147,11 +180,12 @@ class GestorNFS(object):
                     os.chmod(ruta, nuevo_modo)
                     return (True, "Permisos ajustados a 555 (r-xr-xr-x) para solo lectura")
             else:
+                # Es un archivo
                 if necesita_escritura:
-                    # Archivo con escritura: 644 (rw-r--r--)
-                    nuevo_modo = 0o644
+                    # Archivo con escritura: 666 (rw-rw-rw-) para permitir escritura desde clientes
+                    nuevo_modo = 0o666
                     os.chmod(ruta, nuevo_modo)
-                    return (True, "Permisos ajustados a 644 (rw-r--r--) para lectura/escritura")
+                    return (True, "Permisos ajustados a 666 (rw-rw-rw-) para lectura/escritura desde clientes")
                 else:
                     # Archivo solo lectura: 444 (r--r--r--)
                     nuevo_modo = 0o444
@@ -321,10 +355,32 @@ class GestorNFS(object):
         """
         Agrega una nueva línea a /etc/exports. Devuelve True/False.
         Si ajustar_permisos=True, modifica los permisos del filesystem.
+        Soporta archivos individuales agregando fsid automáticamente.
         """
         try:
             if not self._validar_parametros(carpeta, hosts, opciones):
                 return False
+            
+            # Si es un archivo, agregar fsid si no existe
+            if os.path.isfile(carpeta):
+                tiene_fsid = any('fsid=' in opt for opt in opciones)
+                
+                if not tiene_fsid:
+                    # Generar fsid único basado en la ruta
+                    fsid = self.generar_fsid_desde_ruta(carpeta)
+                    fsids_usados = self.obtener_fsids_usados()
+                    
+                    # Si el fsid ya está en uso, buscar uno libre
+                    while fsid in fsids_usados:
+                        fsid = (fsid + 1) % 9999 + 1
+                    
+                    opciones.append('fsid={0}'.format(fsid))
+                    print("INFO: Archivo individual detectado - Agregando fsid={0}".format(fsid))
+                
+                # Agregar no_subtree_check si no existe (recomendado para archivos)
+                if 'no_subtree_check' not in opciones and 'subtree_check' not in opciones:
+                    opciones.append('no_subtree_check')
+                    print("INFO: Agregando no_subtree_check (recomendado para archivos)")
             
             # Si se solicita, ajustar permisos del filesystem
             if ajustar_permisos:
