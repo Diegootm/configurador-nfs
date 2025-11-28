@@ -5,7 +5,6 @@ import os
 import shutil
 from datetime import datetime
 import subprocess
-import stat
 
 class GestorNFS(object):
     """
@@ -160,25 +159,3 @@ class GestorNFS(object):
         except Exception as e:
             print("Error aplicando cambios NFS: {0}".format(e))
             return False
-
-    def verificar_servicio_nfs(self):
-        """
-        Verifica el estado del servicio NFS
-        Retorna (activo, mensaje)
-        """
-        try:
-            # Verificar si el servicio está activo
-            resultado = subprocess.run(
-                ["systemctl", "is-active", "nfs-server"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True
-            )
-            
-            if resultado.returncode == 0:
-                return (True, "Servicio NFS activo y funcionando")
-            else:
-                return (False, "Servicio NFS no está activo. Ejecute: sudo systemctl start nfs-server")
-                
-        except Exception as e:
-            return (False, "No se pudo verificar el servicio NFS: {0}".format(str(e)))
