@@ -348,7 +348,8 @@ class VentanaPrincipal(object):
         # Primero preguntar si es carpeta o archivo
         tipo = messagebox.askquestion(
             "Seleccionar tipo",
-            "Desea exportar una CARPETA?\n\n(Seleccione 'No' para exportar un archivo individual)",
+            "Desea exportar una CARPETA completa?\n\n(Seleccione 'No' para exportar un archivo individual)\n\n"
+            "NOTA: Los archivos individuales requieren configuracion especial (fsid)",
             icon='question'
         )
         
@@ -361,7 +362,7 @@ class VentanaPrincipal(object):
         else:
             # Seleccionar archivo
             ruta = filedialog.askopenfilename(
-                title="Seleccione el archivo a exportar",
+                title="Seleccione el archivo a exportar (se agregara fsid automaticamente)",
                 initialdir="/home"
             )
         
@@ -388,8 +389,8 @@ class VentanaPrincipal(object):
                 )
             elif tipo == 'archivo':
                 self.label_validacion_ruta.config(
-                    text="OK - Archivo valido y accesible",
-                    foreground=self.COLOR_EXITO
+                    text="OK - Archivo valido (se agregara fsid automaticamente)",
+                    foreground=self.COLOR_SECUNDARIO
                 )
         else:
             self.label_validacion_ruta.config(
