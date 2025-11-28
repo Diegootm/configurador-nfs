@@ -59,7 +59,7 @@ class VentanaPrincipal(object):
         # Título principal
         titulo = ttk.Label(
             frame_principal, 
-            text="🖥️ Configurador de Servidor NFS",
+            text="Configurador de Servidor NFS",
             style="Title.TLabel"
         )
         titulo.pack(pady=(0, 10))
@@ -75,7 +75,7 @@ class VentanaPrincipal(object):
         # Barra de estado mejorada
         self.barra_estado = tk.Label(
             self.raiz,
-            text="✓ Listo",
+            text="Listo",
             relief=tk.SUNKEN,
             anchor=tk.W,
             bg=self.COLOR_EXITO,
@@ -88,7 +88,7 @@ class VentanaPrincipal(object):
 
     def _crear_pestana_ver_configuraciones(self):
         marco = ttk.Frame(self.cuaderno, style="TFrame")
-        self.cuaderno.add(marco, text="📋 Ver Configuraciones")
+        self.cuaderno.add(marco, text="Ver Configuraciones")
 
         # Card container
         card = ttk.Frame(marco, style="Card.TFrame")
@@ -121,7 +121,7 @@ class VentanaPrincipal(object):
         
         btn_actualizar = ttk.Button(
             marco_bot,
-            text="🔄 Actualizar Vista",
+            text="Actualizar Vista",
             command=self._cargar_configuraciones,
             style="Primary.TButton"
         )
@@ -129,7 +129,7 @@ class VentanaPrincipal(object):
         
         btn_aplicar = ttk.Button(
             marco_bot,
-            text="✓ Aplicar Cambios NFS",
+            text="Aplicar Cambios NFS",
             command=self._aplicar_cambios_nfs,
             style="Success.TButton"
         )
@@ -137,14 +137,14 @@ class VentanaPrincipal(object):
 
     def _crear_pestana_agregar_configuracion(self):
         marco = ttk.Frame(self.cuaderno, style="TFrame")
-        self.cuaderno.add(marco, text="➕ Agregar Configuración")
+        self.cuaderno.add(marco, text="Agregar Configuracion")
 
         # Card principal
         card = ttk.Frame(marco, style="Card.TFrame")
         card.pack(fill='both', expand=True, padx=10, pady=10)
 
         # Título
-        titulo = ttk.Label(card, text="Nueva Configuración NFS", style="Subtitle.TLabel")
+        titulo = ttk.Label(card, text="Nueva Configuracion NFS", style="Subtitle.TLabel")
         titulo.pack(pady=10)
 
         # Frame para campos de entrada
@@ -154,7 +154,7 @@ class VentanaPrincipal(object):
         # Campo carpeta con explorador
         ttk.Label(
             marco_campos,
-            text="📁 Carpeta o archivo a exportar:",
+            text="Carpeta o archivo a exportar:",
             font=("Arial", 10, "bold")
         ).grid(row=0, column=0, sticky='w', pady=5)
         
@@ -166,7 +166,7 @@ class VentanaPrincipal(object):
         
         btn_explorar = ttk.Button(
             frame_carpeta,
-            text="📂 Explorar",
+            text="Explorar...",
             command=self._explorar_carpeta,
             width=12
         )
@@ -186,7 +186,7 @@ class VentanaPrincipal(object):
         # Campo hosts/red con validación
         ttk.Label(
             marco_campos,
-            text="🌐 Hosts o red (IP/CIDR):",
+            text="Hosts o red (IP/CIDR):",
             font=("Arial", 10, "bold")
         ).grid(row=3, column=0, sticky='w', pady=(15, 5))
         
@@ -207,7 +207,7 @@ class VentanaPrincipal(object):
         # Ejemplos
         ttk.Label(
             marco_campos,
-            text="💡 Ejemplos: 192.168.1.100 | 192.168.1.0/24 | 10.0.0.0/8 | *",
+            text="Ejemplos: 192.168.1.100 | 192.168.1.0/24 | 10.0.0.0/8 | *",
             font=("Arial", 9, "italic"),
             foreground="#718096"
         ).grid(row=6, column=0, sticky='w', pady=(0, 10))
@@ -223,7 +223,7 @@ class VentanaPrincipal(object):
         
         btn_agregar = ttk.Button(
             marco_bot,
-            text="✓ Agregar Configuración",
+            text="Agregar Configuracion",
             command=self._agregar_configuracion,
             style="Success.TButton"
         )
@@ -231,7 +231,7 @@ class VentanaPrincipal(object):
         
         btn_limpiar = ttk.Button(
             marco_bot,
-            text="🗑️ Limpiar Campos",
+            text="Limpiar Campos",
             command=self._limpiar_campos,
             style="Warning.TButton"
         )
@@ -241,7 +241,7 @@ class VentanaPrincipal(object):
         """Crea la sección de opciones NFS con descripciones"""
         marco_opts = ttk.LabelFrame(
             parent,
-            text="⚙️ Opciones NFS",
+            text="Opciones NFS",
             padding=15
         )
         marco_opts.pack(fill='both', expand=True, padx=20, pady=10)
@@ -253,7 +253,7 @@ class VentanaPrincipal(object):
         # Configuración recomendada
         recomendacion = ttk.Label(
             marco_opts,
-            text="💡 Configuración recomendada: rw, sync, no_subtree_check",
+            text="Configuracion recomendada: rw, sync, no_subtree_check",
             font=("Arial", 9, "italic"),
             foreground=self.COLOR_SECUNDARIO
         )
@@ -348,7 +348,7 @@ class VentanaPrincipal(object):
         # Primero preguntar si es carpeta o archivo
         tipo = messagebox.askquestion(
             "Seleccionar tipo",
-            "¿Desea exportar una CARPETA?\n\n(Seleccione 'No' para exportar un archivo individual)",
+            "Desea exportar una CARPETA?\n\n(Seleccione 'No' para exportar un archivo individual)",
             icon='question'
         )
         
@@ -383,17 +383,17 @@ class VentanaPrincipal(object):
         if es_valida:
             if tipo == 'directorio':
                 self.label_validacion_ruta.config(
-                    text="✓ Directorio válido y accesible",
+                    text="OK - Directorio valido y accesible",
                     foreground=self.COLOR_EXITO
                 )
             elif tipo == 'archivo':
                 self.label_validacion_ruta.config(
-                    text="✓ Archivo válido y accesible",
+                    text="OK - Archivo valido y accesible",
                     foreground=self.COLOR_EXITO
                 )
         else:
             self.label_validacion_ruta.config(
-                text="✗ {0}".format(mensaje),
+                text="[!] {0}".format(mensaje),
                 foreground=self.COLOR_ADVERTENCIA
             )
 
@@ -409,12 +409,12 @@ class VentanaPrincipal(object):
         
         if es_valida:
             self.label_validacion_red.config(
-                text="✓ {0}".format(mensaje),
+                text="OK - {0}".format(mensaje),
                 foreground=self.COLOR_EXITO
             )
         else:
             self.label_validacion_red.config(
-                text="✗ {0}".format(mensaje),
+                text="[!] {0}".format(mensaje),
                 foreground=self.COLOR_ADVERTENCIA
             )
 
@@ -435,7 +435,7 @@ class VentanaPrincipal(object):
 
     def _crear_pestana_gestion_configuraciones(self):
         marco = ttk.Frame(self.cuaderno, style="TFrame")
-        self.cuaderno.add(marco, text="🗂️ Gestionar Configuraciones")
+        self.cuaderno.add(marco, text="Gestionar Configuraciones")
 
         # Card
         card = ttk.Frame(marco, style="Card.TFrame")
@@ -475,14 +475,14 @@ class VentanaPrincipal(object):
         
         ttk.Button(
             marco_bot,
-            text="🗑️ Eliminar Seleccionada",
+            text="Eliminar Seleccionada",
             command=self._eliminar_configuracion,
             style="Warning.TButton"
         ).pack(side=tk.LEFT, padx=5)
         
         ttk.Button(
             marco_bot,
-            text="🔄 Actualizar Lista",
+            text="Actualizar Lista",
             command=self._actualizar_lista_configuraciones,
             style="Primary.TButton"
         ).pack(side=tk.LEFT, padx=5)
@@ -494,8 +494,8 @@ class VentanaPrincipal(object):
         if not self.configuraciones:
             self.texto_configuraciones.insert(
                 tk.END,
-                "ℹ️ No hay configuraciones NFS definidas.\n\n"
-                "Para agregar una nueva configuración, use la pestaña 'Agregar Configuración'."
+                "No hay configuraciones NFS definidas.\n\n"
+                "Para agregar una nueva configuracion, use la pestana 'Agregar Configuracion'."
             )
             self.texto_configuraciones.tag_add("info", "1.0", "3.0")
             self.texto_configuraciones.tag_config("info", foreground=self.COLOR_SECUNDARIO)
@@ -506,14 +506,14 @@ class VentanaPrincipal(object):
         
         self._actualizar_lista_configuraciones()
         self._actualizar_barra_estado(
-            "✓ Configuraciones cargadas: {0}".format(len(self.configuraciones)),
+            "Configuraciones cargadas: {0}".format(len(self.configuraciones)),
             tipo="exito"
         )
 
     def _actualizar_lista_configuraciones(self):
         self.lista_configuraciones.delete(0, tk.END)
         for i, c in enumerate(self.configuraciones):
-            texto = "{0}. {1} → {2} ({3})".format(
+            texto = "{0}. {1} -> {2} ({3})".format(
                 i+1, c['carpeta'], c['hosts'], ', '.join(c['opciones'])
             )
             self.lista_configuraciones.insert(tk.END, texto)
@@ -553,7 +553,7 @@ class VentanaPrincipal(object):
                     if not valor:
                         messagebox.showerror(
                             "Error",
-                            "La opción {0} requiere un valor numérico".format(opt)
+                            "La opcion {0} requiere un valor numerico".format(opt)
                         )
                         return
                     
@@ -564,7 +564,7 @@ class VentanaPrincipal(object):
                     except ValueError:
                         messagebox.showerror(
                             "Error",
-                            "El valor de {0} debe ser numérico".format(opt)
+                            "El valor de {0} debe ser numerico".format(opt)
                         )
                         return
                 else:
@@ -574,8 +574,8 @@ class VentanaPrincipal(object):
         if not opciones:
             respuesta = messagebox.askyesno(
                 "Opciones por defecto",
-                "No seleccionó ninguna opción.\n\n"
-                "¿Desea usar la configuración recomendada?\n"
+                "No selecciono ninguna opcion.\n\n"
+                "Desea usar la configuracion recomendada?\n"
                 "(rw, sync, no_subtree_check)"
             )
             if respuesta:
@@ -590,12 +590,12 @@ class VentanaPrincipal(object):
         if not permisos_ok:
             # Preguntar al usuario si desea ajustar permisos
             respuesta = messagebox.askyesnocancel(
-                "⚠️ Verificación de Permisos",
+                "Verificacion de Permisos",
                 mensaje_permisos + "\n\n" +
                 "Seleccione:\n" +
-                "• SÍ: Ajustar permisos automáticamente (recomendado)\n" +
-                "• NO: Continuar sin ajustar (puede causar 'Permission Denied')\n" +
-                "• CANCELAR: Abortar operación"
+                "- SI: Ajustar permisos automaticamente (recomendado)\n" +
+                "- NO: Continuar sin ajustar (puede causar 'Permission Denied')\n" +
+                "- CANCELAR: Abortar operacion"
             )
             
             if respuesta is None:  # Cancelar
@@ -608,33 +608,33 @@ class VentanaPrincipal(object):
         ok = self.gestor_nfs.agregar_configuracion(carpeta, hosts, opciones, ajustar_permisos)
         
         if ok:
-            msg_exito = "✓ Configuración agregada correctamente\n\n"
+            msg_exito = "Configuracion agregada correctamente\n\n"
             if ajustar_permisos:
-                msg_exito += "✓ Permisos del sistema de archivos ajustados\n\n"
-            msg_exito += "⚠️ IMPORTANTE: Debe aplicar los cambios en la pestaña 'Ver Configuraciones'"
+                msg_exito += "Permisos del sistema de archivos ajustados\n\n"
+            msg_exito += "IMPORTANTE: Debe aplicar los cambios en la pestana 'Ver Configuraciones'"
             
-            messagebox.showinfo("Éxito", msg_exito)
+            messagebox.showinfo("Exito", msg_exito)
             self._limpiar_campos()
             self._cargar_configuraciones()
         else:
             messagebox.showerror(
                 "Error",
-                "No se pudo agregar la configuración.\n"
+                "No se pudo agregar la configuracion.\n"
                 "Verifique los permisos y los logs del sistema."
             )
 
     def _eliminar_configuracion(self):
         sel = self.lista_configuraciones.curselection()
         if not sel:
-            messagebox.showwarning("Advertencia", "Seleccione una configuración de la lista")
+            messagebox.showwarning("Advertencia", "Seleccione una configuracion de la lista")
             return
         
         idx = sel[0]
         linea = self.configuraciones[idx]['linea_original']
         
         confirma = messagebox.askyesno(
-            "Confirmar eliminación",
-            "¿Está seguro de eliminar esta configuración?\n\n{0}".format(linea)
+            "Confirmar eliminacion",
+            "Esta seguro de eliminar esta configuracion?\n\n{0}".format(linea)
         )
         
         if not confirma:
@@ -643,10 +643,10 @@ class VentanaPrincipal(object):
         ok = self.gestor_nfs.eliminar_configuracion(idx)
         
         if ok:
-            messagebox.showinfo("Éxito", "✓ Configuración eliminada correctamente")
+            messagebox.showinfo("Exito", "Configuracion eliminada correctamente")
             self._cargar_configuraciones()
         else:
-            messagebox.showerror("Error", "No se pudo eliminar la configuración")
+            messagebox.showerror("Error", "No se pudo eliminar la configuracion")
 
     def _aplicar_cambios_nfs(self):
         # Primero verificar el estado del servicio NFS
@@ -654,9 +654,9 @@ class VentanaPrincipal(object):
         
         if not servicio_activo:
             respuesta = messagebox.askyesno(
-                "⚠️ Servicio NFS Inactivo",
+                "Servicio NFS Inactivo",
                 mensaje_servicio + "\n\n" +
-                "¿Desea intentar iniciar el servicio automáticamente?\n\n" +
+                "Desea intentar iniciar el servicio automaticamente?\n\n" +
                 "(Requiere permisos de root)"
             )
             
@@ -669,8 +669,8 @@ class VentanaPrincipal(object):
                         stderr=subprocess.PIPE
                     )
                     messagebox.showinfo(
-                        "Éxito",
-                        "✓ Servicio NFS iniciado correctamente"
+                        "Exito",
+                        "Servicio NFS iniciado correctamente"
                     )
                 except Exception as e:
                     messagebox.showerror(
@@ -684,8 +684,8 @@ class VentanaPrincipal(object):
         
         confirma = messagebox.askyesno(
             "Aplicar cambios",
-            "Esto ejecutará 'exportfs -ra' para aplicar los cambios.\n\n"
-            "¿Desea continuar?"
+            "Esto ejecutara 'exportfs -ra' para aplicar los cambios.\n\n"
+            "Desea continuar?"
         )
         
         if not confirma:
@@ -695,23 +695,23 @@ class VentanaPrincipal(object):
         
         if ok:
             messagebox.showinfo(
-                "Éxito",
-                "✓ Cambios aplicados correctamente\n\n" +
+                "Exito",
+                "Cambios aplicados correctamente\n\n" +
                 "El servidor NFS ha sido actualizado.\n" +
                 "Los clientes pueden ahora acceder a los recursos compartidos."
             )
-            self._actualizar_barra_estado("✓ Cambios NFS aplicados correctamente", tipo="exito")
+            self._actualizar_barra_estado("Cambios NFS aplicados correctamente", tipo="exito")
         else:
             messagebox.showerror(
                 "Error",
                 "No se pudieron aplicar los cambios.\n\n" +
                 "Posibles causas:\n" +
-                "• No tiene permisos de root\n" +
-                "• El servicio NFS no está instalado\n" +
-                "• Hay errores de sintaxis en /etc/exports\n\n" +
+                "- No tiene permisos de root\n" +
+                "- El servicio NFS no esta instalado\n" +
+                "- Hay errores de sintaxis en /etc/exports\n\n" +
                 "Ejecute: sudo exportfs -ra"
             )
-            self._actualizar_barra_estado("✗ Error al aplicar cambios NFS", tipo="error")
+            self._actualizar_barra_estado("Error al aplicar cambios NFS", tipo="error")
 
     def _limpiar_campos(self):
         self.entrada_carpeta.delete(0, tk.END)
